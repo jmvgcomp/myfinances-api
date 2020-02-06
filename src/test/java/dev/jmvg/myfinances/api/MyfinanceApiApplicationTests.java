@@ -1,4 +1,4 @@
-package dev.jmvg.myfinances.myfinanceapi;
+package dev.jmvg.myfinances.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
