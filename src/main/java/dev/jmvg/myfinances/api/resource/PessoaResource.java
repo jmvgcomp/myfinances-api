@@ -1,15 +1,16 @@
 package dev.jmvg.myfinances.api.resource;
 
+import dev.jmvg.myfinances.api.event.RecursoCriadoEvent;
 import dev.jmvg.myfinances.api.model.Pessoa;
 import dev.jmvg.myfinances.api.repository.PessoaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,9 +18,12 @@ import java.util.Optional;
 @RequestMapping("/pessoas")
 public class PessoaResource {
     private PessoaRepository pessoaRepository;
+    private ApplicationEventPublisher publisher;
+
     @Autowired
-    public PessoaResource(PessoaRepository pessoaRepository) {
+    public PessoaResource(PessoaRepository pessoaRepository, ApplicationEventPublisher publisher) {
         this.pessoaRepository = pessoaRepository;
+        this.publisher = publisher;
     }
 
     @GetMapping
@@ -38,10 +42,8 @@ public class PessoaResource {
     public ResponseEntity<Pessoa> criar(@Valid @RequestBody Pessoa pessoa, HttpServletResponse response){
         Pessoa pessoaSalva = pessoaRepository.save(pessoa);
 
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{codigo}")
-                .buildAndExpand(pessoaSalva.getCodigo()).toUri();
-        response.setHeader("Location", uri.toASCIIString());
+        publisher.publishEvent(new RecursoCriadoEvent(this, response, pessoaSalva.getCodigo()));
 
-        return ResponseEntity.created(uri).body(pessoaSalva);
+        return ResponseEntity.status(HttpStatus.CREATED).body(pessoaSalva);
     }
 }
